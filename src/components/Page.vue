@@ -6,7 +6,6 @@
     <SidebarBorder
       :isSidebarOpened="isSidebarOpened"
       @mousedown.native="startStretch"
-      @mouseup.native="finishStretch"
       @toggle-sidebar="toggleSidebar" />
   </div>
 </template>
@@ -15,6 +14,7 @@
 import StretchableSidebar from './StretchableSidebar.vue'
 import SidebarBorder from './SidebarBorder.vue'
 const TOGGLE_BTN_WIDTH = 35
+const DEFAULT_SIDEBAR_WIDTH = 0.2
 
 export default {
   name: 'page',
@@ -25,7 +25,7 @@ export default {
   data() {
     return {
       stretchableSidebarStyle: {
-        width: 0.2
+        width: DEFAULT_SIDEBAR_WIDTH // 初期表示時の横幅は親要素の20%
       },
       pageRect: {
         width: 0,
@@ -41,9 +41,10 @@ export default {
       return { width: `${ this.stretchableSidebarStyle.width * 100 }%` }
     },
     isSidebarOpened () {
-      return this.stretchableSidebarStyle.width !== this.sidebarMinSize
+      return this.stretchableSidebarStyle.width > this.sidebarMinSize
     },
     sidebarMinSize () {
+      // トグルボタンの横幅の割合の半分をサイドバーの最小値にする
       return this.toggleBtnStyle.width / 2
     }
   },
@@ -60,29 +61,32 @@ export default {
       this.setToggleBtnStyle()
     },
     setPageRect () {
-      // ページ全体を包む要素の横幅と高さを保存。
+      // サイドバーの親要素の横幅と高さを保存。
       const { width, height } = document.getElementById('page').getBoundingClientRect()
       this.pageRect.width = width
       this.pageRect.height = height
     },
     setToggleBtnStyle () {
+      // 35px(ボタンの横幅)が親要素の横幅に対してどれぐらいの割合かを保存する。
       this.toggleBtnStyle.width = TOGGLE_BTN_WIDTH / this.pageRect.width
     },
     startStretch () {
-      window.addEventListener('mousemove', this.handleStretch)
+      // 画面上でポインターを動かす度に、handleMoveが呼ばれるようにする。
+      window.addEventListener('mousemove', this.handleMove)
+      window.addEventListener('mouseup', this.finishStretch)
     },
     finishStretch () {
-      window.removeEventListener('mousemove', this.handleStretch)
+      window.removeEventListener('mousemove', this.handleMove)
+      window.removeEventListener('mouseup', this.finishStretch)
     },
-    handleStretch (event) {
+    handleMove (event) {
       const { pageX } = event
-      // 画面最左からポインターまでの距離 / 画面全体の横幅
-      const sidebarWidth = pageX / this.pageRect.width
-      if (this.checkIsSidebarEnoughWide(sidebarWidth)) {
+      const sidebarWidth = pageX / this.pageRect.width // サイドバーの親要素に対する横幅の割合 = 画面最左からポインターまでの距離 / 親要素の横幅
+      if (sidebarWidth >= this.sidebarMinSize) {
         this.stretchableSidebarStyle.width = sidebarWidth
       } else {
         this.stretchableSidebarStyle.width = this.sidebarMinSize
-        window.removeEventListener('mousemove', this.handleStretch)
+        this.finishStretch()
       }
     },
     addResizeEvent () {
@@ -93,13 +97,10 @@ export default {
     },
     toggleSidebar () {
       if (this.stretchableSidebarStyle.width === this.sidebarMinSize) {
-        this.stretchableSidebarStyle.width = 0.2
+        this.stretchableSidebarStyle.width = DEFAULT_SIDEBAR_WIDTH
       } else {
         this.stretchableSidebarStyle.width = this.sidebarMinSize
       }
-    },
-    checkIsSidebarEnoughWide(sidebarWidth) {
-      return sidebarWidth > this.sidebarMinSize
     }
   }
 }

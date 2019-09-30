@@ -37,5 +37,6 @@ export default {
   background-color: rgb(244, 245, 247);
   height: 100vh;
   overflow: hidden;
+  user-select: none;
 }
 </style>
