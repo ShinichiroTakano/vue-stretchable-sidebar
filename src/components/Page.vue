@@ -14,6 +14,7 @@
 <script>
 import StretchableSidebar from './StretchableSidebar.vue'
 import SidebarBorder from './SidebarBorder.vue'
+const TOGGLE_BTN_WIDTH = 35
 
 export default {
   name: 'page',
@@ -30,7 +31,6 @@ export default {
         width: 0,
         height: 0
       },
-      TOGGLE_BTN_WIDTH: 35,
       toggleBtnStyle: {
         width: null
       }
@@ -60,12 +60,13 @@ export default {
       this.setToggleBtnStyle()
     },
     setPageRect () {
+      // ページ全体を包む要素の横幅と高さを保存。
       const { width, height } = document.getElementById('page').getBoundingClientRect()
       this.pageRect.width = width
       this.pageRect.height = height
     },
     setToggleBtnStyle () {
-      this.toggleBtnStyle.width = this.TOGGLE_BTN_WIDTH / this.pageRect.width
+      this.toggleBtnStyle.width = TOGGLE_BTN_WIDTH / this.pageRect.width
     },
     startStretch () {
       window.addEventListener('mousemove', this.handleStretch)
@@ -75,6 +76,7 @@ export default {
     },
     handleStretch (event) {
       const { pageX } = event
+      // 画面最左からポインターまでの距離 / 画面全体の横幅
       const sidebarWidth = pageX / this.pageRect.width
       if (this.checkIsSidebarEnoughWide(sidebarWidth)) {
         this.stretchableSidebarStyle.width = sidebarWidth
